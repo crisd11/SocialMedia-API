@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SocialMedia.Core.Interfaces;
 using SocialMedia.Infrastructure.Data;
+using SocialMedia.Infrastructure.Filters;
 using SocialMedia.Infrastructure.Repositories;
 using System;
 using System.Collections.Generic;
@@ -29,13 +31,28 @@ namespace SocialMedia.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies()); //para que lea los mapeos en toda la app
+
+            services.AddControllers().AddNewtonsoftJson(options => //para usar esto hay que instalar newtonsoft en aspnetcore
+            {
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            }) //para evitar el loopeo infinito de crear una entidad y te quiera devolver sus propiedades
+               //que adentro contienen otra entidad que a su vez tiene la 1er entidad y nunca se rompe el ciclo
+            .ConfigureApiBehaviorOptions(options =>
+            {
+               options.SuppressModelStateInvalidFilter = true;
+            }); //para invalidar los filtros del decorador [APICONTROLLER]
 
             services.AddDbContext<SocialMediaContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("SocialMedia"))
             );
             //dependancy injection (le decis al metodo que para X interfaz le vas a dar Y implementacion)
             services.AddTransient<IPostRepository, PostRepository>();
+
+            services.AddMvc(options =>
+            {
+                options.Filters.Add<ValidationFilter>(); //para registrar un filtro que va ser usado de forma global
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
