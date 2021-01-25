@@ -54,8 +54,7 @@ namespace SocialMedia.Api
 
             //dependancy injection (le decis al metodo que para X interfaz le vas a dar Y implementacion)
             services.AddTransient<IPostBusiness, PostBusiness>();
-            services.AddTransient<IPostRepository, PostRepository>();
-            services.AddTransient<IUserRepository, UserRepository>();
+            services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
 
             services.AddMvc(options =>
             {
