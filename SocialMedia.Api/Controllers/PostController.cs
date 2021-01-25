@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using SocialMedia.Api.Responses;
 using SocialMedia.Core.DTOs;
 using SocialMedia.Core.Entities;
 using SocialMedia.Core.Interfaces;
@@ -14,38 +15,64 @@ namespace SocialMedia.Api.Controllers
     [ApiController]
     public class PostController : ControllerBase
     {
-        private readonly IPostRepository _postRepository;
+        private readonly IPostBusiness _postBusiness;
         private readonly IMapper _mapper;
 
-        public PostController(IPostRepository postRepository, IMapper mapper)
+        public PostController(IPostBusiness postBusiness, IMapper mapper)
         {
-            _postRepository = postRepository;
+            _postBusiness = postBusiness;
             _mapper = mapper;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetPosts()
         {
-            var posts = await _postRepository.GetPosts();
+            var posts = await _postBusiness.GetPosts();
+
             var postsDto = _mapper.Map<IEnumerable<PostDto>>(posts);
-            return Ok(postsDto);
+            var response = new ApiResponse<IEnumerable<PostDto>>(postsDto);
+            return Ok(response);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPost(int id)
         {
-            var post = await _postRepository.GetPost(id);
-            var postDto = _mapper.Map<PostDto>(post);
+            var post = await _postBusiness.GetPost(id);
 
-            return Ok(post);
+            var postDto = _mapper.Map<PostDto>(post);
+            var response = new ApiResponse<PostDto>(postDto);
+            return Ok(response);
         }
 
         [HttpPost]
         public async Task<IActionResult> Post(PostDto postDto)
         {
             var post = _mapper.Map<Post>(postDto);
-            await _postRepository.InsertPost(post);
-            return Ok(post);
+            await _postBusiness.InsertPost(post);
+
+            postDto = _mapper.Map<PostDto>(post);
+            var response = new ApiResponse<PostDto>(postDto);
+            return Ok(response);
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> Put(int id, PostDto postDto)
+        {
+            var post = _mapper.Map<Post>(postDto);
+            post.PostId = id;
+            var result = await _postBusiness.UpdatePost(post);
+
+            var response = new ApiResponse<bool>(result);
+            return Ok(response);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await _postBusiness.DeletePost(id);
+
+            var response = new ApiResponse<bool>(result);
+            return Ok(response);
         }
     }
 }
