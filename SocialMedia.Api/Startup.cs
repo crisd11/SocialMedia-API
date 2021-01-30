@@ -36,7 +36,10 @@ namespace SocialMedia.Api
             //para que lea los mapeos en toda la app
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            services.AddControllers().AddNewtonsoftJson(options => //para usar esto hay que instalar newtonsoft en aspnetcore
+            services.AddControllers(options =>
+            {
+                options.Filters.Add<GlobalExceptionFilter>();
+            }).AddNewtonsoftJson(options => //para usar esto hay que instalar newtonsoft en aspnetcore
             {
                 //para evitar el loopeo infinito de crear una entidad y te quiera devolver sus propiedades
                 //que adentro contienen otra entidad que a su vez tiene la 1er entidad y nunca se rompe el ciclo
